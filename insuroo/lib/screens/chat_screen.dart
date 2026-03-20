@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:insuroo/widgets/mic_button.dart';
+import 'package:insuroo/widgets/suggested_card.dart';
 import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
 import '../theme/app_theme.dart';
@@ -345,7 +347,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 12),
             ..._suggestedQuestions.map(
-              (q) => _SuggestedCard(
+              (q) => SuggestedCard(
                 question: q,
                 onTap: () {
                   _controller.text = q;
@@ -378,7 +380,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           // ── Mic button ──────────────────────────────────────────────────
           Consumer<ChatProvider>(
             builder: (context, provider, _) {
-              return _MicButton(
+              return MicButton(
                 isRecording: provider.isRecording,
                 isSpeaking: provider.isSpeaking,
                 isDisabled: provider.isLoading,
@@ -489,206 +491,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SuggestedCard extends StatefulWidget {
-  final String question;
-  final VoidCallback onTap;
-
-  const _SuggestedCard({required this.question, required this.onTap});
-
-  @override
-  State<_SuggestedCard> createState() => _SuggestedCardState();
-}
-
-class _SuggestedCardState extends State<_SuggestedCard> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: _hovered
-                ? AppTheme.primaryColor.withOpacity(0.15)
-                : AppTheme.cardDark,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: _hovered
-                  ? AppTheme.primaryColor.withOpacity(0.6)
-                  : AppTheme.dividerColor,
-              width: 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.auto_awesome_rounded,
-                  color: AppTheme.primaryColor, size: 16),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.question,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios_rounded,
-                  color: AppTheme.textSecondary, size: 14),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Mic Button ──────────────────────────────────────────────────────────────
-
-class _MicButton extends StatefulWidget {
-  final bool isRecording;
-  final bool isSpeaking;
-  final bool isDisabled;
-  final VoidCallback onTap;
-
-  const _MicButton({
-    required this.isRecording,
-    required this.isSpeaking,
-    required this.isDisabled,
-    required this.onTap,
-  });
-
-  @override
-  State<_MicButton> createState() => _MicButtonState();
-}
-
-class _MicButtonState extends State<_MicButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.35).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void didUpdateWidget(_MicButton old) {
-    super.didUpdateWidget(old);
-    if (widget.isRecording || widget.isSpeaking) {
-      if (!_pulseController.isAnimating) {
-        _pulseController.repeat(reverse: true);
-      }
-    } else {
-      _pulseController.stop();
-      _pulseController.reset();
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Color ringColor;
-    List<Color> buttonGradient;
-    IconData icon;
-    String tooltip;
-
-    if (widget.isRecording) {
-      ringColor = const Color(0xFFFF5252);
-      buttonGradient = const [Color(0xFFFF5252), Color(0xFFFF1744)];
-      icon = Icons.mic_rounded;
-      tooltip = 'Tap to stop recording';
-    } else if (widget.isSpeaking) {
-      ringColor = AppTheme.successColor;
-      buttonGradient = [AppTheme.successColor, AppTheme.accentColor];
-      icon = Icons.volume_up_rounded;
-      tooltip = 'Speaking\u2026';
-    } else {
-      ringColor = Colors.transparent;
-      buttonGradient = const [AppTheme.primaryColor, AppTheme.accentColor];
-      icon = Icons.mic_none_rounded;
-      tooltip = 'Tap to speak';
-    }
-
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: widget.isDisabled ? null : widget.onTap,
-        child: AnimatedBuilder(
-          animation: _pulseAnimation,
-          builder: (context, child) {
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                // Pulsing ring (only while active)
-                if (widget.isRecording || widget.isSpeaking)
-                  Transform.scale(
-                    scale: _pulseAnimation.value,
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: ringColor.withOpacity(0.6),
-                          width: 2,
-                        ),
-                        color: ringColor.withOpacity(0.12),
-                      ),
-                    ),
-                  ),
-                // The button
-                AnimatedOpacity(
-                  opacity: widget.isDisabled ? 0.4 : 1.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: buttonGradient,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: buttonGradient.first.withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 24),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
       ),
     );
   }
