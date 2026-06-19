@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/typing_indicator.dart';
 import 'dart:math' as math;
+import 'recommendation_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -218,6 +219,16 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               // Actions
               Row(
                 children: [
+                  IconButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const RecommendationScreen()),
+                    ),
+                    icon: const Icon(Icons.recommend_rounded,
+                        color: AppTheme.accentColor, size: 22),
+                    tooltip: 'Get Recommendations',
+                  ),
                   IconButton(
                     onPressed: provider.retryHealthCheck,
                     icon: const Icon(Icons.wifi_tethering_rounded,
